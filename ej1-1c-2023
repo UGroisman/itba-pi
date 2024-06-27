@@ -1,0 +1,194 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <limits.h>
+#include <math.h>
+#include "./getnum.h"
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <assert.h>
+#include "./ej1-1c-2023.h"
+
+
+typedef struct despegue{
+    struct despegue * tail;
+    char * matriculas;
+}TFlight;
+
+
+typedef struct despegue * TListD;
+
+
+typedef struct runway{
+    TListD firstD;
+    TListD lastD;
+    size_t cant_despegues;
+}TRunway;
+
+
+typedef struct airportCDT{
+    TRunway * first; // esto es un vector!!!; es un vector d listas!!!
+    size_t cant_pistas; // usadas!!!
+    char * occupied;
+    size_t dim;
+}airportCDT;
+
+
+
+/* Crea un sistema de administración de pistas y despegues de aviones
+** de un aeropuerto.
+** El sistema inicia sin pistas.
+*/
+airportADT newAirport(void){
+    airportADT aux = calloc(1, sizeof(struct aiportCDT));
+    // no se el sizze!!!!
+    return aux;
+}
+
+/* Agrega una pista de despegue con el identificador runwayId.
+** La pista inicia sin aviones.
+** Retorna la cantidad actual de pistas en el sistema o -1 si falla.
+** Falla si existe una pista con el identificador runwayId.
+*/
+int addRunway(airportADT airportAdt, size_t runwayId){// va con realloc pq el first esta en null!!
+    int id=runwayId-1;
+    if(runwayId<=0){
+        return -1;
+    }
+    if(runwayId>=airportAdt->dim){
+        airportAdt->first = realloc(airportAdt->first, (id+1) * sizeof(struct runway)); //agrego + runways!!    
+         airportAdt->occupied = realloc(airportAdt->occupied, (id+1)); //CUIDADO Q ME LA OLVIDE!!!            
+        for (int i = airportAdt->dim; i < id+1; i++)
+        {
+            airportAdt->first[i].cant_despegues=0;
+            airportAdt->first[i].firstD=NULL;
+            airportAdt->first[i].lastD=NULL;
+            airportAdt->occupied[i]=0;
+        }
+        airportAdt->dim=id+1;
+        
+    }
+    if(airportAdt->occupied[id]==1){
+        return -1;
+    }
+    airportAdt->occupied[id]=1;
+    airportAdt->cant_pistas++;
+
+    return airportAdt->cant_pistas;
+
+}
+
+
+/* Agrega al final de la pista de despegue con el identificador
+** runwayId al avión de matrícula registration
+** y retorna la cantidad actual de aviones en la pista o -1 si falla.
+** Falla si la pista no existe.
+
+
+*/
+/*
+    static TListD addRecPlane(TListD list, const char * registration, int * ok){
+        if(list==NULL){
+            TListD aux= malloc(sizeof(struct despegue));
+            aux->matriculas = strcpy(malloc(strlen(registration)+1),registration);
+            aux->tail = NULL;
+            *ok=1;
+
+            return aux;
+        }   
+
+        list->tail=addRecPlane(list->tail, registration,ok);
+
+        return list;
+
+    }
+
+*/
+
+
+int addPlaneToRunway(airportADT airportAdt, size_t runwayId, const char * registration){
+    int id=runwayId-1;
+    if(runwayId<=0 && runwayId>airportAdt->dim){
+        return -1;
+    }
+    if(airportAdt->occupied[id]==1){
+        return -1;
+    }
+    TListD aux= malloc(sizeof(struct despegue));
+     aux->matriculas = strcpy(malloc(strlen(registration)+1),registration);
+     aux->tail = NULL;
+
+
+    if(airportAdt->first[id].cant_despegues==0){
+        airportAdt->first[id].lastD=aux;
+         airportAdt->first[id].firstD=aux;
+    }else{
+        airportAdt->first[id].lastD->tail=aux;
+        airportAdt->first[id].lastD =  aux;
+    }
+
+    return ++(airportAdt->first[id].cant_despegues);
+
+}
+
+
+/* Elimina al avión que se encuentra al principio de la pista de
+** despegue con el identificador runwayId
+** y retorna la matrícula del avión eliminado o NULL si falla.
+** Falla si la pista no existe.
+** Falla si no hay aviones en la pista.
+*/
+char * takeOff(airportADT airportAdt, size_t runwayId){// ESTA
+    int id=runwayId-1;
+    TListD aux = airportAdt->first[id].firstD;
+    airportAdt->first[id].firstD = aux->tail;
+
+    if(aux->matriculas == NULL || airportAdt->first[id].cant_despegues==0 || airportAdt->occupied[i]==0){
+        return -1;
+    }
+    char * resp= strcpy(malloc(strlen(aux->matriculas)+1), aux->matriculas);
+
+
+
+    free(aux);
+
+    return resp;
+
+
+}
+
+/* Retorna un arreglo con las matrículas de los aviones que se
+** encuentran en la pista de despegue con el identificador
+** runwayId en orden inverso al orden de despegue (el último elemento
+** del arreglo debe coincidir con el valor de retorno de una
+** invocación a la función takeOff sobre esa pista).
+** El arreglo debe ** contar con una cadena vacía "" como marca de fin.
+** Si la pista no existe retorna NULL.
+*/
+char ** pendingFlights(airportADT airportAdt, size_t runwayId){//ESTA
+// aca un if por si falla....
+    int id= runwayId-1;
+    char ** resp= malloc((airportAdt->first[id].cant_despegues+1) * sizeof(char *));
+    int i;
+    TListD current = airportAdt->first[id].firstD; // acordarse d guardarlo!!!
+    for(i=airportAdt->first[id].cant_despegues; i!=0; i--){
+        resp[i-1]=malloc(strlen(current->matriculas)+1);
+        strcpy(resp[i-1] , current->matriculas);
+        current = current->tail;
+
+
+    }
+
+    resp[airportAdt->first[id].cant_despegues]="";
+    return resp;
+
+}
+/* Libera los recursos utilizados por el sistema de administración de
+** pistas y despegues de aviones de un aeropuerto.
+*/
+
+
+
+
+
+void freeAirport(airportADT airportAdt);
