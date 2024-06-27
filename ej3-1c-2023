@@ -1,0 +1,111 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <limits.h>
+#include <math.h>
+#include "./getnum.h"
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <assert.h>
+#include "./ej3-1c-2023.h"
+
+typedef struct node{
+    struct node * tail;
+    elemtype elem;
+    size_t dim;
+}TNode;
+
+typedef struct node * TList;
+
+typedef struct elemCountCDT{
+    TList first;
+    TList iter;
+    compare cmp;
+    size_t dim;
+}elemCountCDT;
+
+/* Crea todos los recursos para el TAD
+** Arranca inicialmente sin elementos.
+*/
+elemCountADT newElemCount(compare cmp){
+    elemCountADT aux = calloc(1, sizeof(struct elemCountCDT));
+    aux->cmp=cmp;
+
+    return aux;
+}
+
+/* Registra una aparición de elem y retorna la cantidad actual de
+** apariciones registradas.
+*/
+static TList contElemRec(TList list, elemtype elem, int * ok, compare cmp){
+    int c;
+    if(list==NULL || (c=cmp(list->elem, elem)) > 0){
+        TList aux = malloc(sizeof(TNode));
+        aux->elem=elem;
+        aux->dim=1;
+        *ok=1;
+        aux->tail=list;
+
+        return aux;
+    }
+    if(c<0){
+        list->tail = contElemRec(list->tail, elem, ok, cmp);
+    }
+    if(c==0){
+        list->dim++;
+        *ok=list->dim;
+    }
+
+    return list;
+}
+
+size_t countElem(elemCountADT elemCountAdt, elemtype elem){
+    size_t ok=0;
+    elemCountAdt->first = countElem(elemCountAdt->first, elem, &ok, elemCountAdt->cmp);
+    if(ok==1){//ok..
+        elemCountAdt->dim++;
+    }
+    return ok; 
+}
+
+/* Retorna la cantidad de elementos distintos registrados. */
+size_t distinctElems(elemCountADT elemCountAdt){
+    return elemCountAdt->dim;
+}
+/* Funciones de iteración para que se puedan consultar todos los elementos
+** registrados en forma ordenada
+** junto con la cantidad de apariciones de cada uno.
+*/
+void toBegin(elemCountADT elemCountAdt){
+    elemCountAdt->iter = elemCountAdt->first;
+}
+
+size_t hasNext(elemCountADT elemCountAdt){
+    return elemCountAdt->iter->tail != NULL;
+}
+
+elemtype next(elemCountADT elemCountAdt, size_t * count){
+    // me devuelve el elemento y me pone en el siguiente en el iter!
+    if(hasNext(elemCountAdt->iter)){
+        elemtype aux = elemCountAdt->iter->elem;
+        elemCountAdt->iter = elemCountAdt->iter->tail;
+
+        return aux;
+    }
+    exit(1);
+}
+/* Libera los recursos utilizados por el TAD */
+
+static void freeRec(TList list){
+    if(list == NULL){
+        return;
+    }
+    freeRec(list->tail);
+    free(list);
+
+}
+
+void freeElemCount(elemCountADT elemCountAdt){
+    freeRec(elemCountAdt->first);
+    free(elemCountAdt);
+}
