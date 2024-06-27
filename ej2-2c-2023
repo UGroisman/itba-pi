@@ -1,0 +1,105 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <limits.h>
+#include <math.h>
+#include "./getnum.h"
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <assert.h>
+#include "./ej2-2c-2023.h"
+
+#define BLOCKS 100
+#define INTERES 20
+
+
+typedef int (*compare) (landmarkType landmark1, landmarkType landmark2);
+
+typedef struct landmarkCDT{
+    landmarkType * vec;
+    char * occupied;
+    size_t dim; 
+    size_t totalCountUsed;// usados!
+    compare cmp; // esto? es para ver si ya esta el sitio creo!!!!
+}landmarkCDT;
+
+
+/**
+* Crea una nueva colección de sitios de interés. Sólo se registrará un sitio cada
+* 100 metros (uno entre los 0 y 99 metros, posiblemente otro entre los 100 y 199, etc.)
+*/
+landmarkADT newLandmark(compare cmp){ //ESTE
+    landmarkADT aux = calloc(1, sizeof(struct  landmarkCDT));
+    aux->cmp=cmp;
+    return aux;
+}
+
+/**
+* Agrega un punto de interés #site a #meters metros del origen. Si ya había
+* un sitio, sólo queda #site (ver programa de testeo)
+*/
+
+int distancia(size_t meters){
+    size_t i=0;
+
+    while(meters>=100){
+        meters = meters - BLOCKS;
+        i++;
+    }
+    return i;
+
+}
+
+// no habia entendido bien la consigna, me mario mucho lo d landmarks...
+//era una estupidez....
+void addLandmark(landmarkADT landmark, size_t meters, landmarkType site){ // ESTE, // landmarktyoe es tipo elemType
+    size_t dist = distancia(meters);
+    int i;
+    if(dist>landmark->dim){
+        landmark->vec = realloc(landmark->vec, (dist+1)*sizeof(landmarkType));
+        landmark->occupied = realloc(landmark->occupied, dist + 1);
+        for ( i = landmark->dim; i < dist; i++)
+        {
+            landmark->occupied[i]=0;
+        }
+        //landmark->dim = dist+1;
+    }
+    landmark->vec[dist] = site;
+    if(!landmark->occupied[dist]){
+        landmark->occupied[dist]=1;
+        landmark->totalCountUsed++;
+    }
+
+
+
+}
+
+
+
+/*
+* Retorna un vector con los sitios de interés, en orden ascendente por distancia
+* al origen. Si no hubiera sitios de interés retorna NULL
+*/
+
+landmarkType * landmarks(const landmarkADT landmark){ //ESTE
+    landmarkType * resp = NULL;
+    int i;
+    int k=0;
+    if(landmark->totalCountUsed!=0){
+         resp = malloc((landmark->totalCountUsed+1) * sizeof(landmarkType));
+        for ( i = 0; i < landmark->dim && k!=landmark->totalCountUsed; i++)
+        {
+            if(landmark->occupied[i]){
+                resp[k++]=landmark->vec[i];
+
+            }
+        }
+    }else{
+        resp = malloc(sizeof(landmarkType));
+    }
+    resp[k]=NULL;
+    
+    return resp;
+
+}
+
