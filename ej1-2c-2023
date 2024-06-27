@@ -1,0 +1,124 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <limits.h>
+#include <math.h>
+#include "./getnum.h"
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <assert.h>
+#include "./ej1-2c-2023.h"
+
+#define YEAR 366
+//de 1 a 366
+// acordarse de poner +1!!
+
+typedef struct node{
+    struct node * tail;
+    char * visitor;
+}TNode;
+
+typedef struct node * TList;
+
+typedef struct day{
+    TList first;
+    TList iter; //***
+    size_t dayCount;
+}Tday;
+
+typedef struct museumTicketCDT{
+    Tday dias[YEAR]; // creo q ya se inicializa asi...
+    size_t totalCount;
+}museumTicketCDT;
+
+
+/**
+* Reserva los recursos para administrar las ventas de tickets para visitar un museo en
+* un año determinado
+* Nota: Como no se indica el año para el que se lo utilizará se asume que el
+* año será siempre bisiesto
+*/
+museumTicketADT newMuseumTicket(void){//ESTA
+    museumTicketADT aux = calloc(1,sizeof(museumTicketCDT));
+    //no hacer calloc al array!!!
+    return aux;
+}
+
+/**
+* Se registra un ticket para que #visitor visite el museo el día #dayOfYear del año
+* Retorna la cantidad actual de tickets registrados para visitar el museo ese día
+* Retorna 0 si #dayOfYear es igual a 0 o mayor a 366
+* Retorna 0 si ya se había registrado un ticket para ese #visitor y ese #dayOfYear
+*/
+
+static TList findPerson(TList first, const char * visitor, int * ok){
+    int c; 
+    if(first == NULL || (c= strcasecmp(first->visitor, visitor)) >0){
+        TList aux = malloc(sizeof(TNode));
+        // me falto esto, muy grave
+        aux->visitor = strcpy(malloc(strlen(visitor)+1),visitor);// grave error, me falto!!!
+       
+        aux->tail=first;
+        *ok=1;
+        return aux;
+    }
+    if(c==0){
+        return first;
+    }
+    if(c<0){
+        first->tail = findPerson(first->tail, visitor, ok);
+    }
+
+    return first;
+
+}
+
+int addTicket(museumTicketADT museumTicketADT, size_t dayOfYear, const char * visitor){//ESTA
+ if(dayOfYear == 0 || dayOfYear>366){
+    return 0;
+ }
+ int day = dayOfYear-1;
+ int ok=0;
+ museumTicketADT->dias[day].first = findPerson(museumTicketADT->dias[day].first, visitor, &ok);
+ museumTicketADT->totalCount += ok;
+ museumTicketADT->dias[day].dayCount += ok;
+
+ return ok;
+}
+
+/**
+* Retorna la cantidad de tickets registrados para visitar el museo el día #dayOfYear
+* del año
+* Retorna -1 si #dayOfYear es igual a 0 o mayor a 366
+*/
+int dayTickets(const museumTicketADT museumTicketADT, size_t dayOfYear){//ESTA
+ if(dayOfYear == 0 || dayOfYear>366){
+    return -1;
+ }
+ int day = dayOfYear-1;
+ return museumTicketADT->dias[day].dayCount;
+
+
+}
+
+
+/**
+* Funciones de iteración para poder consultar, para un día #dayOfYear del año,
+* los nombres de los visitantes de los tickets registrados para visitar el museo
+* ese día en orden alfabético por nombre de visitante.
+* IMPORTANTE: Permitir utilizar estas funciones para distintos días del año
+* EN SIMULTANEO (ver ejemplo en programa de prueba)
+* Abortar si cualquiera de las funciones es invocada con un #dayOfYear igual a 0
+* o mayor a 366
+*/
+void toBeginByDay(museumTicketADT museumTicketADT, size_t dayOfYear){//ESTA
+ if(dayOfYear == 0 || dayOfYear>366){
+    exit(1);
+ }
+ int day = dayOfYear-1;
+ museumTicketADT->dias[day].iter =  museumTicketADT->dias[day].first;
+ 
+ return;
+}
+
+
