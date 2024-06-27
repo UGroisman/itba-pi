@@ -1,0 +1,148 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <limits.h>
+#include <math.h>
+#include "./getnum.h"
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <assert.h>
+#include "./ej2-1c-2023.h"
+
+
+typedef struct elem{
+    size_t dim;//uso para ver si esta creado o no!
+    size_t used_docks;
+    char * docks;// en 1 si hay bicis..
+}elem;
+
+typedef struct bikeSharingCDT{
+    elem * station;
+    size_t maxStations;
+    size_t used_spaces;
+}bikeSharingCDT;
+
+
+/* Crea un sistema de administración de estaciones de alquiler de bicicletas a partir de
+** la cantidad máxima de estaciones que soportará.
+** El sistema inicia sin estaciones.
+** Cada estación tendrá un id entre 1 y maxStationsCount inclusive.
+** Se asume que la cantidad de estaciones que se agregarán es cercana a maxStationsCount
+*/
+bikeSharingADT newBikeSharing(size_t maxStationsCount){
+    bikeSharingADT aux = malloc(sizeof(bikeSharingCDT));
+    aux->station=calloc(maxStationsCount, sizeof(elem));// no olvidarse!!!!
+    // esto m deja todos los docks null!!!!
+    aux->maxStations=maxStationsCount;
+    aux->used_spaces=0;
+
+    return aux;
+}
+
+/* Agrega una estación de alquiler de bicicletas con el identificador stationId
+** con una cantidad de docks docksCount. La estación inicia con bicicletas en
+** todos sus docks
+** Retorna la cantidad actual de estaciones en el sistema o -1 si falla.
+** Falla si el identificador stationId no está en el rango [1, maxStationsCount].
+** Falla si existe una estación con el identificador stationId.
+*/
+int addStation(bikeSharingADT bikeSharingAdt, size_t stationId, size_t docksCount){
+    int i ;
+    if(stationId<=1 || stationId>bikeSharingAdt->maxStations){// x eso tenes q guardar el max station!!
+        exit(1);
+    }
+    int id = stationId-1;
+    if(bikeSharingAdt->station[id].docks == NULL){
+        exit(1);
+    }
+    bikeSharingAdt->station[id].dim=docksCount;
+    //tengo q hacer un malloc para los docks!
+    bikeSharingAdt->station[id].docks = realloc( bikeSharingAdt->station[id].docks, docksCount); // creo q aca realloc?? pq me lo crea con el calloc d arriba???
+    for (i= 0; i < docksCount; i++)
+    {
+         bikeSharingAdt->station[id].docks[i]=1;// los pongo en 1!
+    }
+    //bikeSharingAdt->station[id].docks[docksCount]=0; no me conviene
+    bikeSharingAdt->used_spaces++;
+
+    return bikeSharingAdt->used_spaces;
+    
+}
+
+
+
+
+
+
+/* Alguien retira la bicicleta del dock con identificador dockId de la estación con
+** identificador stationId.
+** Retorna 0 si se pudo hacer o -1 si falla.
+** Falla si la estación no existe.
+** Falla si el dock no existe.
+** Falla si en el dock no había una bicicleta
+*/
+size_t rentBike(bikeSharingADT bikeSharingAdt, size_t stationId, size_t dockId){
+    int id = stationId-1;
+    int id_docks = dockId-1;
+    if(stationId<=1 || stationId>bikeSharingAdt->maxStations || dockId < 1 || bikeSharingAdt->station[id_docks].dim < dockId ){// x eso tenes q guardar el max station!!
+        return -1;
+    }
+     if(bikeSharingAdt->station[id].docks[id_docks]){
+        bikeSharingAdt->station[id].docks[id_docks]=0;
+         bikeSharingAdt->station[id].used_docks++;
+        return 0;
+     }
+
+
+    return -1;
+
+
+}
+
+
+/* Retorna la cantidad de docks ocupados en la estación con identificador stationId
+** o -1 si la estación no existe
+*/
+size_t bikesAvailable(bikeSharingADT bikeSharingAdt, size_t stationId){
+    
+    return bikeSharingAdt->station[stationId-1].used_docks;
+}
+
+/* Se ocupa el dock con identificador dockId de la estación con identificador stationId,
+** porque se coloca una bicicleta en el mismo
+** Retorna 0 si se pudo ocupar el dock o -1 si falla.
+** Falla si la estación no existe.
+** Falla si el dock no existe.
+** Falla si el dock está ocupado (ya había una bicicleta en el mismo)
+*/
+size_t returnBike(bikeSharingADT bikeSharingAdt, size_t stationId, size_t dockId){
+  int id = stationId-1;
+    int id_docks = dockId-1;
+    if(stationId<=1 || stationId>bikeSharingAdt->maxStations || dockId < 1 || bikeSharingAdt->station[id_docks].dim < dockId ){// x eso tenes q guardar el max station!!
+        return -1;
+    }
+     if(!bikeSharingAdt->station[id].docks[id_docks]){
+        bikeSharingAdt->station[id].docks[id_docks]=1;
+         bikeSharingAdt->station[id].used_docks--;
+        return 0;
+     }
+
+
+    return -1;
+
+}
+
+
+void freeBikeSharing(bikeSharingADT bikeSharingAdt){
+    for (int i = 0; i < bikeSharingAdt->maxStations; i++)
+    {
+        if(bikeSharingAdt->maxStations[i] != NULL){
+            free(bikeSharingAdt->station[i].docks);
+        }
+    }
+     free(bikeSharingAdt->station);
+     free(bikeSharingAdt);
+
+     // esto es suificente??pq solo libera los vec y el bikesharingadt
+    
+}
