@@ -1,0 +1,77 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <limits.h>
+#include <math.h>
+#include "./getnum.h"
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <assert.h>
+//#include "./ej2-2c-2023.h"
+
+
+
+
+//bastasnte sencillo este ej...
+
+typedef struct node {
+    char head;
+    struct node * tail;
+}Node;
+typedef struct node * TList;
+
+
+int contarGrupos(char * string, char c);
+int countGroups(TList list, char c);
+
+int main(){
+    /*
+        char * str="abbbccaadaaaa"; 
+        char c= 'x';
+        int a =contarGrupos(str, c);
+        printf("%d \n", a);
+    */
+
+     // Create the linked list
+    Node node1 = {'a', NULL};
+    Node node2 = {'a', &node1};
+    Node node3 = {'b', &node2};
+    Node node4 = {'b', &node3};
+    Node node5 = {'b', &node4};
+    Node node6 = {'c', &node5};
+    Node node7 = {'c', &node6};
+
+    // Assign the head of the list
+    TList list = &node7;
+
+    // Count groups of 'b' characters
+    char target = 'b';
+    int result = countGroups(list, target);
+    printf("Number of groups of '%c': %d\n", target, result);
+
+    return 0;
+}
+
+
+
+int contarGrupos(char * string, char c){
+    if(*string == 0){// asi!! //CUIDADO CON LA NOTACION D STRINGS!!!!
+        return 0;
+    }
+
+    return ((*string==c && *(string+1)!=c) || (*string==c && *(string+1) == 0)) + contarGrupos(string+1,c);
+
+
+}
+
+// misma logica q funcion anterior....
+int countGroups(TList list, char c){
+    if(list == NULL){
+        return 0;
+    }
+   
+   return ((list->head == c && list->tail == NULL) || (list->head == c && list->tail->head !=c) ) + countGroups(list->tail, c);
+
+    
+
+}
